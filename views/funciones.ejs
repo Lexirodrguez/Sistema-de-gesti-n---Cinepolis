@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        h1 {
+            color: #333;
+            margin: 0;
+        }
+        .btn {
+            background: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .btn:hover {
+            background: #0056b3;
+        }
+        .btn-danger {
+            background: #dc3545;
+        }
+        .btn-danger:hover {
+            background: #c82333;
+        }
+        .btn-success {
+            background: #28a745;
+        }
+        .btn-success:hover {
+            background: #218838;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .form-group textarea {
+            height: 80px;
+            resize: vertical;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 20px;
+            border-radius: 10px;
+            width: 80%;
+            max-width: 500px;
+        }
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .close:hover {
+            color: black;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+        }
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+        .actions {
+            display: flex;
+            gap: 5px;
+        }
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎭 <%= title %></h1>
+            <div>
+                <a href="/" class="btn">← Volver</a>
+                <button class="btn btn-success" onclick="openModal()">+ Nueva Función</button>
+            </div>
+        </div>
+
+        <div id="message"></div>
+        <div id="loading" class="loading">Cargando funciones...</div>
+        <div id="funciones-container"></div>
+
+        <!-- Modal para agregar/editar función -->
+        <div id="funcionModal" class="modal">
+            <div class="modal-content">
+                <span class="close" onclick="closeModal()">&times;</span>
+                <h2 id="modalTitle">Nueva Función</h2>
+                <form id="funcionForm">
+                    <input type="hidden" id="funcionId" name="id">
+                    
+                    <div class="form-group">
+                        <label for="id_peliculasfuncion">Película:</label>
+                        <select id="id_peliculasfuncion" name="id_peliculasfuncion" required>
+                            <option value="">Seleccionar película...</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="id_salafuncion">Sala:</label>
+                        <select id="id_salafuncion" name="id_salafuncion" required>
+                            <option value="">Seleccionar sala...</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="id_horariofuncion">Horario:</label>
+                        <select id="id_horariofuncion" name="id_horariofuncion" required>
+                            <option value="">Seleccionar horario...</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="fechahora_funcion">Fecha y Hora:</label>
+                        <input type="datetime-local" id="fechahora_funcion" name="fechahora_funcion" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="estado_funcion">Estado:</label>
+                        <select id="estado_funcion" name="estado_funcion" required>
+                            <option value="1">Activa</option>
+                            <option value="0">Inactiva</option>
+                        </select>
+                    </div>
+                    
+                    <div style="text-align: right; margin-top: 20px;">
+                        <button type="button" onclick="closeModal()" class="btn">Cancelar</button>
+                        <button type="submit" class="btn btn-success">Guardar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let funciones = [];
+        let peliculas = [];
+        let salas = [];
+        let horarios = [];
+        let editingId = null;
+
+        // Cargar datos al iniciar
+        document.addEventListener('DOMContentLoaded', function() {
+            loadData();
+        });
+
+        // Cargar todos los datos necesarios
+        async function loadData() {
+            try {
+                const [funcionesRes, peliculasRes, salasRes, horariosRes] = await Promise.all([
+                    fetch('/api/funciones/api'),
+                    fetch('/api/peliculas/api'),
+                    fetch('/api/salas/api'),
+                    fetch('/api/horarios/api')
+                ]);
+
+                const [funcionesData, peliculasData, salasData, horariosData] = await Promise.all([
+                    funcionesRes.json(),
+                    peliculasRes.json(),
+                    salasRes.json(),
+                    horariosRes.json()
+                ]);
+
+                if (funcionesData.success) {
+                    funciones = funcionesData.data;
+                }
+
+                if (peliculasData.success) {
+                    peliculas = peliculasData.data;
+                    populateSelect('id_peliculasfuncion', peliculas, 'id_peliculas', 'titulo_peliculas');
+                }
+
+                if (salasData.success) {
+                    salas = salasData.data;
+                    populateSelect('id_salafuncion', salas, 'id_sala', 'nombre_sala');
+                }
+
+                if (horariosData.success) {
+                    horarios = horariosData.data;
+                    populateSelect('id_horariofuncion', horarios, 'id_horario', 'nombre_horario');
+                }
+
+                // Renderizar funciones después de cargar todos los datos
+                renderFunciones();
+
+            } catch (error) {
+                showMessage('Error de conexión: ' + error.message, 'error');
+            }
+        }
+
+        // Poblar select con datos
+        function populateSelect(selectId, data, valueField, textField) {
+            const select = document.getElementById(selectId);
+            select.innerHTML = '<option value="">Seleccionar...</option>';
+            data.forEach(item => {
+                const option = document.createElement('option');
+                option.value = item[valueField];
+                option.textContent = item[textField];
+                select.appendChild(option);
+            });
+        }
+
+        // Renderizar tabla de funciones
+        function renderFunciones() {
+            const container = document.getElementById('funciones-container');
+            const loading = document.getElementById('loading');
+            
+            loading.style.display = 'none';
+            
+            if (funciones.length === 0) {
+                container.innerHTML = '<p>No hay funciones registradas.</p>';
+                return;
+            }
+
+            let html = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Película</th>
+                            <th>Sala</th>
+                            <th>Horario</th>
+                            <th>Fecha y Hora</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            funciones.forEach(funcion => {
+                const pelicula = peliculas.find(p => p.id_peliculas === funcion.id_peliculasfuncion);
+                const sala = salas.find(s => s.id_sala === funcion.id_salafuncion);
+                const horario = horarios.find(h => h.id_horario === funcion.id_horariofuncion);
+                
+                html += `
+                    <tr>
+                        <td>${pelicula ? pelicula.titulo_peliculas : 'N/A'}</td>
+                        <td>${sala ? sala.nombre_sala : 'N/A'}</td>
+                        <td>${horario ? horario.nombre_horario : 'N/A'}</td>
+                        <td>${funcion.fechahora_funcion}</td>
+                        <td>${funcion.estado_funcion ? 'Activa' : 'Inactiva'}</td>
+                        <td class="actions">
+                            <button class="btn" onclick="editFuncion(${funcion.id_funcion})">Editar</button>
+                            <button class="btn btn-danger" onclick="deleteFuncion(${funcion.id_funcion})">Eliminar</button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        // Abrir modal
+        function openModal() {
+            editingId = null;
+            document.getElementById('modalTitle').textContent = 'Nueva Función';
+            document.getElementById('funcionForm').reset();
+            document.getElementById('funcionModal').style.display = 'block';
+        }
+
+        // Cerrar modal
+        function closeModal() {
+            document.getElementById('funcionModal').style.display = 'none';
+        }
+
+        // Editar función
+        function editFuncion(id) {
+            const funcion = funciones.find(f => f.id_funcion === id);
+            if (funcion) {
+                editingId = id;
+                document.getElementById('modalTitle').textContent = 'Editar Función';
+                document.getElementById('funcionId').value = funcion.id_funcion;
+                document.getElementById('id_peliculasfuncion').value = funcion.id_peliculasfuncion;
+                document.getElementById('id_salafuncion').value = funcion.id_salafuncion;
+                document.getElementById('id_horariofuncion').value = funcion.id_horariofuncion;
+                document.getElementById('fechahora_funcion').value = funcion.fechahora_funcion;
+                document.getElementById('estado_funcion').value = funcion.estado_funcion;
+                document.getElementById('funcionModal').style.display = 'block';
+            }
+        }
+
+        // Eliminar función
+        async function deleteFuncion(id) {
+            if (confirm('¿Estás seguro de que quieres eliminar esta función?')) {
+                try {
+                    const response = await fetch(`/api/funciones/api/${id}`, {
+                        method: 'DELETE'
+                    });
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        showMessage('Función eliminada correctamente', 'success');
+                        loadData();
+                    } else {
+                        showMessage('Error al eliminar: ' + data.message, 'error');
+                    }
+                } catch (error) {
+                    showMessage('Error de conexión: ' + error.message, 'error');
+                }
+            }
+        }
+
+        // Manejar envío del formulario
+        document.getElementById('funcionForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const data = Object.fromEntries(formData.entries());
+            
+            try {
+                const url = editingId ? `/api/funciones/api/${editingId}` : '/api/funciones/api';
+                const method = editingId ? 'PUT' : 'POST';
+                
+                const response = await fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showMessage(editingId ? 'Función actualizada correctamente' : 'Función creada correctamente', 'success');
+                    closeModal();
+                    loadData();
+                } else {
+                    showMessage('Error: ' + result.message, 'error');
+                }
+            } catch (error) {
+                showMessage('Error de conexión: ' + error.message, 'error');
+            }
+        });
+
+        // Mostrar mensajes
+        function showMessage(message, type) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.innerHTML = `<div class="${type}">${message}</div>`;
+            setTimeout(() => {
+                messageDiv.innerHTML = '';
+            }, 3000);
+        }
+
+        // Cerrar modal al hacer clic fuera
+        window.onclick = function(event) {
+            const modal = document.getElementById('funcionModal');
+            if (event.target === modal) {
+                closeModal();
+            }
+        }
+    </script>
+</body>
+</html>
+

@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        h1 {
+            color: #333;
+            margin: 0;
+        }
+        .btn {
+            background: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .btn:hover {
+            background: #0056b3;
+        }
+        .btn-danger {
+            background: #dc3545;
+        }
+        .btn-danger:hover {
+            background: #c82333;
+        }
+        .btn-success {
+            background: #28a745;
+        }
+        .btn-success:hover {
+            background: #218838;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .form-group textarea {
+            height: 80px;
+            resize: vertical;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 20px;
+            border-radius: 10px;
+            width: 80%;
+            max-width: 500px;
+        }
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .close:hover {
+            color: black;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+        }
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+        .actions {
+            display: flex;
+            gap: 5px;
+        }
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏢 <%= title %></h1>
+            <div>
+                <a href="/" class="btn">← Volver</a>
+                <button class="btn btn-success" onclick="openModal()">+ Nueva Sala</button>
+            </div>
+        </div>
+
+        <div id="message"></div>
+        <div id="loading" class="loading">Cargando salas...</div>
+        <div id="salas-container"></div>
+
+        <!-- Modal para agregar/editar sala -->
+        <div id="salaModal" class="modal">
+            <div class="modal-content">
+                <span class="close" onclick="closeModal()">&times;</span>
+                <h2 id="modalTitle">Nueva Sala</h2>
+                <form id="salaForm">
+                    <input type="hidden" id="salaId" name="id">
+                    
+                    <div class="form-group">
+                        <label for="nombre_sala">Nombre de la Sala:</label>
+                        <input type="text" id="nombre_sala" name="nombre_sala" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="tipo_sala">Tipo de Sala:</label>
+                        <select id="tipo_sala" name="tipo_sala" required>
+                            <option value="">Seleccionar tipo...</option>
+                            <option value="2D">2D</option>
+                            <option value="3D">3D</option>
+                            <option value="IMAX">IMAX</option>
+                            <option value="VIP">VIP</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="estado_sala">Estado:</label>
+                        <select id="estado_sala" name="estado_sala" required>
+                            <option value="1">Activa</option>
+                            <option value="0">Inactiva</option>
+                        </select>
+                    </div>
+                    
+                    <div style="text-align: right; margin-top: 20px;">
+                        <button type="button" onclick="closeModal()" class="btn">Cancelar</button>
+                        <button type="submit" class="btn btn-success">Guardar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let salas = [];
+        let editingId = null;
+
+        // Cargar salas al iniciar
+        document.addEventListener('DOMContentLoaded', function() {
+            loadSalas();
+        });
+
+        // Cargar salas desde la API
+        async function loadSalas() {
+            try {
+                const response = await fetch('/api/salas/api');
+                const data = await response.json();
+                
+                if (data.success) {
+                    salas = data.data;
+                    renderSalas();
+                } else {
+                    showMessage('Error al cargar salas: ' + data.message, 'error');
+                }
+            } catch (error) {
+                showMessage('Error de conexión: ' + error.message, 'error');
+            }
+        }
+
+        // Renderizar tabla de salas
+        function renderSalas() {
+            const container = document.getElementById('salas-container');
+            const loading = document.getElementById('loading');
+            
+            loading.style.display = 'none';
+            
+            if (salas.length === 0) {
+                container.innerHTML = '<p>No hay salas registradas.</p>';
+                return;
+            }
+
+            let html = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Nombre</th>
+                            <th>Tipo</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            salas.forEach(sala => {
+                html += `
+                    <tr>
+                        <td>${sala.nombre_sala}</td>
+                        <td>${sala.tipo_sala}</td>
+                        <td>${sala.estado_sala ? 'Activa' : 'Inactiva'}</td>
+                        <td class="actions">
+                            <button class="btn" onclick="editSala(${sala.id_sala})">Editar</button>
+                            <button class="btn btn-danger" onclick="deleteSala(${sala.id_sala})">Eliminar</button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        // Abrir modal
+        function openModal() {
+            editingId = null;
+            document.getElementById('modalTitle').textContent = 'Nueva Sala';
+            document.getElementById('salaForm').reset();
+            document.getElementById('salaModal').style.display = 'block';
+        }
+
+        // Cerrar modal
+        function closeModal() {
+            document.getElementById('salaModal').style.display = 'none';
+        }
+
+        // Editar sala
+        function editSala(id) {
+            const sala = salas.find(s => s.id_sala === id);
+            if (sala) {
+                editingId = id;
+                document.getElementById('modalTitle').textContent = 'Editar Sala';
+                document.getElementById('salaId').value = sala.id_sala;
+                document.getElementById('nombre_sala').value = sala.nombre_sala;
+                document.getElementById('tipo_sala').value = sala.tipo_sala;
+                document.getElementById('estado_sala').value = sala.estado_sala;
+                document.getElementById('salaModal').style.display = 'block';
+            }
+        }
+
+        // Eliminar sala
+        async function deleteSala(id) {
+            if (confirm('¿Estás seguro de que quieres eliminar esta sala?')) {
+                try {
+                    const response = await fetch(`/api/salas/api/${id}`, {
+                        method: 'DELETE'
+                    });
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        showMessage('Sala eliminada correctamente', 'success');
+                        loadSalas();
+                    } else {
+                        showMessage('Error al eliminar: ' + data.message, 'error');
+                    }
+                } catch (error) {
+                    showMessage('Error de conexión: ' + error.message, 'error');
+                }
+            }
+        }
+
+        // Manejar envío del formulario
+        document.getElementById('salaForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const data = Object.fromEntries(formData.entries());
+            
+            try {
+                const url = editingId ? `/api/salas/api/${editingId}` : '/api/salas/api';
+                const method = editingId ? 'PUT' : 'POST';
+                
+                const response = await fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showMessage(editingId ? 'Sala actualizada correctamente' : 'Sala creada correctamente', 'success');
+                    closeModal();
+                    loadSalas();
+                } else {
+                    showMessage('Error: ' + result.message, 'error');
+                }
+            } catch (error) {
+                showMessage('Error de conexión: ' + error.message, 'error');
+            }
+        });
+
+        // Mostrar mensajes
+        function showMessage(message, type) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.innerHTML = `<div class="${type}">${message}</div>`;
+            setTimeout(() => {
+                messageDiv.innerHTML = '';
+            }, 3000);
+        }
+
+        // Cerrar modal al hacer clic fuera
+        window.onclick = function(event) {
+            const modal = document.getElementById('salaModal');
+            if (event.target === modal) {
+                closeModal();
+            }
+        }
+    </script>
+</body>
+</html>
+
