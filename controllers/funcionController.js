@@ -175,7 +175,10 @@ const renderFuncionesPage = async (req, res) => {
     const horarios = await Horario.getAll();
 
     // Usar parámetros de consulta (req.query) para filtrar si vienen
+<<<<<<< HEAD
     // Ejemplo: /funciones?pelicula=2&sala=1
+=======
+>>>>>>> 38cac213c944fefe935da02efe502c8d56eb766c
     const { pelicula, sala, horario } = req.query;
     if (pelicula) {
       funciones = funciones.filter(f => String(f.id_peliculasfuncion || f.id_peliculas) === String(pelicula));

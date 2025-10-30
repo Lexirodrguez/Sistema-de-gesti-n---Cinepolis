@@ -159,7 +159,10 @@ const deletePelicula = async (req, res) => {
 };
 
 
+<<<<<<< HEAD
 // Asegúrate de que todas las funciones estén exportadas correctamente
+=======
+>>>>>>> 38cac213c944fefe935da02efe502c8d56eb766c
 module.exports = {
   getAllPeliculas,
   getPeliculaById,
