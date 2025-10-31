@@ -56,6 +56,12 @@
         .btn-success:hover {
             background: #218838;
         }
+        .btn-info {
+            background: #17a2b8;
+        }
+        .btn-info:hover {
+            background: #138496;
+        }
         .form-group {
             margin-bottom: 15px;
         }
@@ -143,6 +149,33 @@
             border-radius: 4px;
             margin: 10px 0;
         }
+        .welcome-section {
+            text-align: center;
+            padding: 60px 20px;
+        }
+        .welcome-section h2 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .welcome-section p {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 18px;
+        }
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 30px;
+        }
+        .action-btn {
+            padding: 15px 30px;
+            font-size: 16px;
+            min-width: 150px;
+        }
+        .hidden {
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -150,19 +183,41 @@
         <div class="header">
             <h1>🎬 <%= title %></h1>
             <div>
-                <a href="/" class="btn">← Volver</a>
-                <button class="btn btn-success" onclick="openModal()">+ Nueva Película</button>
+                <a href="/" class="btn">← Inicio</a>
+                <button class="btn btn-info" onclick="mostrarInicio()" id="btnVolverInicio" style="display: none;">← Volver al Inicio</button>
             </div>
         </div>
 
         <div id="message"></div>
-        <div id="loading" class="loading">Cargando películas...</div>
-        <div id="peliculas-container"></div>
+
+        <!-- Sección de Bienvenida -->
+        <div id="welcomeSection" class="welcome-section">
+            <h2>Bienvenido al Sistema de Gestión de Películas</h2>
+            <p>Selecciona una opción para comenzar:</p>
+            <div class="action-buttons">
+                <button class="btn btn-info action-btn" onclick="mostrarListado()">
+                    📋 Listar Películas
+                </button>
+                <button class="btn btn-success action-btn" onclick="abrirModalCrear()">
+                    ➕ Nueva Película
+                </button>
+            </div>
+        </div>
+
+        <!-- Sección de Listado -->
+        <div id="listSection" class="hidden">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3>Lista de Películas</h3>
+                <button class="btn btn-success" onclick="abrirModalCrear()">+ Nueva Película</button>
+            </div>
+            <div id="loading" class="loading">Cargando películas...</div>
+            <div id="peliculas-container"></div>
+        </div>
 
         <!-- Modal para agregar/editar película -->
         <div id="peliculaModal" class="modal">
             <div class="modal-content">
-                <span class="close" onclick="closeModal()">&times;</span>
+                <span class="close" onclick="cerrarModal()">&times;</span>
                 <h2 id="modalTitle">Nueva Película</h2>
                 <form id="peliculaForm">
                     <input type="hidden" id="peliculaId" name="id">
@@ -183,7 +238,7 @@
                     </div>
                     
                     <div style="text-align: right; margin-top: 20px;">
-                        <button type="button" onclick="closeModal()" class="btn">Cancelar</button>
+                        <button type="button" onclick="cerrarModal()" class="btn">Cancelar</button>
                         <button type="submit" class="btn btn-success">Guardar</button>
                     </div>
                 </form>
@@ -195,40 +250,75 @@
         let peliculas = [];
         let editingId = null;
 
-        // Cargar películas al iniciar
+        // Cargar al iniciar
         document.addEventListener('DOMContentLoaded', function() {
-            loadPeliculas();
+            // Mostrar solo la sección de bienvenida al inicio
+            mostrarInicio();
         });
+
+        // Mostrar sección de bienvenida
+        function mostrarInicio() {
+            cambiarURL('/peliculas');
+            document.getElementById('welcomeSection').classList.remove('hidden');
+            document.getElementById('listSection').classList.add('hidden');
+            document.getElementById('btnVolverInicio').style.display = 'none';
+            document.getElementById('peliculaModal').style.display = 'none';
+        }
+
+        // Mostrar listado de películas
+        function mostrarListado() {
+            cambiarURL('/peliculas/listar');
+            document.getElementById('welcomeSection').classList.add('hidden');
+            document.getElementById('listSection').classList.remove('hidden');
+            document.getElementById('btnVolverInicio').style.display = 'inline-block';
+            cargarPeliculas();
+        }
+
+        // Abrir modal para crear película desde el inicio
+        function abrirModalCrear() {
+            cambiarURL('/peliculas/crear');
+            editingId = null;
+            document.getElementById('modalTitle').textContent = 'Nueva Película';
+            document.getElementById('peliculaForm').reset();
+            document.getElementById('peliculaModal').style.display = 'block';
+            
+            // Si estamos en la vista de inicio, mostrar también el botón volver
+            if (!document.getElementById('listSection').classList.contains('hidden')) {
+                document.getElementById('btnVolverInicio').style.display = 'inline-block';
+            }
+        }
 
         // Cambiar URL sin recargar la página
         function cambiarURL(url) {
             window.history.pushState(null, null, url);
-            document.getElementById('modalTitle').textContent = url.includes('editar') ? 'Editar Película' : 'Nueva Película';
         }
 
         // Cargar películas desde la API
-        async function loadPeliculas() {
+        async function cargarPeliculas() {
             try {
+                document.getElementById('loading').style.display = 'block';
+                document.getElementById('peliculas-container').innerHTML = '';
+                
                 const response = await fetch('/peliculas/listar');
                 const data = await response.json();
                 
+                document.getElementById('loading').style.display = 'none';
+                
                 if (data.success) {
                     peliculas = data.data;
-                    renderPeliculas();
+                    renderizarPeliculas();
                 } else {
                     showMessage('Error al cargar películas: ' + data.message, 'error');
                 }
             } catch (error) {
+                document.getElementById('loading').style.display = 'none';
                 showMessage('Error de conexión: ' + error.message, 'error');
             }
         }
 
         // Renderizar tabla de películas
-        function renderPeliculas() {
+        function renderizarPeliculas() {
             const container = document.getElementById('peliculas-container');
-            const loading = document.getElementById('loading');
-            
-            loading.style.display = 'none';
             
             if (peliculas.length === 0) {
                 container.innerHTML = '<p>No hay películas registradas.</p>';
@@ -256,7 +346,7 @@
                         <td>${pelicula.año_peliculas}</td>
                         <td class="actions">
                             <button class="btn" onclick="editarPelicula(${pelicula.id_peliculas})">Editar</button>
-                            <button class="btn btn-danger" onclick="deletePelicula(${pelicula.id_peliculas})">Eliminar</button>
+                            <button class="btn btn-danger" onclick="eliminarPelicula(${pelicula.id_peliculas})">Eliminar</button>
                         </td>
                     </tr>
                 `;
@@ -264,15 +354,6 @@
 
             html += '</tbody></table>';
             container.innerHTML = html;
-        }
-
-        // Abrir modal para NUEVA película
-        function openModal() {
-            cambiarURL('/peliculas/crear');
-            editingId = null;
-            document.getElementById('modalTitle').textContent = 'Nueva Película';
-            document.getElementById('peliculaForm').reset();
-            document.getElementById('peliculaModal').style.display = 'block';
         }
 
         // Abrir modal para EDITAR película
@@ -290,14 +371,17 @@
             }
         }
 
-        // Cerrar modal y restaurar URL
-        function closeModal() {
-            window.history.pushState(null, null, '/peliculas');
+        // Cerrar modal
+        function cerrarModal() {
             document.getElementById('peliculaModal').style.display = 'none';
+            // Si cerramos el modal sin estar en listado, volver al inicio
+            if (document.getElementById('listSection').classList.contains('hidden')) {
+                cambiarURL('/peliculas');
+            }
         }
 
         // Eliminar película
-        async function deletePelicula(id) {
+        async function eliminarPelicula(id) {
             if (confirm('¿Estás seguro de que quieres eliminar esta película?')) {
                 try {
                     const response = await fetch(`/peliculas/eliminar/${id}`, {
@@ -307,7 +391,7 @@
                     
                     if (data.success) {
                         showMessage('Película eliminada correctamente', 'success');
-                        loadPeliculas();
+                        cargarPeliculas();
                     } else {
                         showMessage('Error al eliminar: ' + data.message, 'error');
                     }
@@ -340,8 +424,14 @@
                 
                 if (result.success) {
                     showMessage(editingId ? 'Película actualizada correctamente' : 'Película creada correctamente', 'success');
-                    closeModal();
-                    loadPeliculas();
+                    cerrarModal();
+                    // Si estamos en el listado, recargar las películas
+                    if (!document.getElementById('listSection').classList.contains('hidden')) {
+                        cargarPeliculas();
+                    } else {
+                        // Si creamos desde el inicio, mostrar el listado automáticamente
+                        mostrarListado();
+                    }
                 } else {
                     const errorMessage = result.errores ? result.errores.join(', ') : result.message;
                     showMessage('Error: ' + errorMessage, 'error');
@@ -364,13 +454,14 @@
         window.onclick = function(event) {
             const modal = document.getElementById('peliculaModal');
             if (event.target === modal) {
-                closeModal();
+                cerrarModal();
             }
         }
 
         // Manejar el botón "Atrás" del navegador
         window.onpopstate = function(event) {
             document.getElementById('peliculaModal').style.display = 'none';
+            mostrarInicio();
         }
     </script>
 </body>

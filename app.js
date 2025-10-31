@@ -28,7 +28,6 @@ app.use('/salas', salaRoutes);
 app.use('/horarios', horarioRoutes);
 
 
-
 // Ruta de bienvenida - Página principal
 app.get('/', (req, res) => {
   res.render('index', { title: 'Cinepolis - Sistema de Gestión' });

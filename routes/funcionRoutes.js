@@ -7,12 +7,12 @@ const funcionController = require('../controllers/funcionController');
 // Ruta para renderizar la vista
 router.get('/', funcionController.renderFuncionesPage);
 
-// Rutas API
-router.get('/api', funcionController.getAllFunciones);
-router.get('/api/:id', funcionController.getFuncionById);
-router.post('/api', funcionController.createFuncion);
-router.put('/api/:id', funcionController.updateFuncion);
-router.delete('/api/:id', funcionController.deleteFuncion);
+// Rutas API independientes
+router.get('/listar', funcionController.getAllFunciones);
+router.get('/buscar/:id', funcionController.getFuncionById);
+router.post('/crear', funcionController.createFuncion);
+router.put('/actualizar/:id', funcionController.updateFuncion);
+router.delete('/eliminar/:id', funcionController.deleteFuncion);
 
 module.exports = router;
 

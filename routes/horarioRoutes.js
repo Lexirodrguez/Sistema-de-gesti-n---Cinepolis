@@ -9,14 +9,11 @@ router.get('/', (req, res) => {
     res.render('horarios', { title: 'Gestión de Horarios' });
 });
 
-// Rutas API
-router.get('/api', horarioController.getAllHorarios);
-router.get('/api/:id', horarioController.getHorarioById);
-router.post('/api', horarioController.createHorario);
-router.put('/api/:id', horarioController.updateHorario);
-router.delete('/api/:id', horarioController.deleteHorario);
+// Rutas API independientes
+router.get('/listar', horarioController.getAllHorarios);
+router.get('/buscar/:id', horarioController.getHorarioById);
+router.post('/crear', horarioController.createHorario);
+router.put('/actualizar/:id', horarioController.updateHorario);
+router.delete('/eliminar/:id', horarioController.deleteHorario);
 
 module.exports = router;
-
-
-
