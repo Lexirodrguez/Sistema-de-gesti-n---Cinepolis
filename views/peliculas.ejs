@@ -200,10 +200,16 @@
             loadPeliculas();
         });
 
+        // Cambiar URL sin recargar la página
+        function cambiarURL(url) {
+            window.history.pushState(null, null, url);
+            document.getElementById('modalTitle').textContent = url.includes('editar') ? 'Editar Película' : 'Nueva Película';
+        }
+
         // Cargar películas desde la API
         async function loadPeliculas() {
             try {
-                const response = await fetch('/api/peliculas/api');
+                const response = await fetch('/peliculas/listar');
                 const data = await response.json();
                 
                 if (data.success) {
@@ -249,7 +255,7 @@
                         <td>${pelicula.duracion_peliculas} min</td>
                         <td>${pelicula.año_peliculas}</td>
                         <td class="actions">
-                            <button class="btn" onclick="editPelicula(${pelicula.id_peliculas})">Editar</button>
+                            <button class="btn" onclick="editarPelicula(${pelicula.id_peliculas})">Editar</button>
                             <button class="btn btn-danger" onclick="deletePelicula(${pelicula.id_peliculas})">Eliminar</button>
                         </td>
                     </tr>
@@ -260,21 +266,18 @@
             container.innerHTML = html;
         }
 
-        // Abrir modal
+        // Abrir modal para NUEVA película
         function openModal() {
+            cambiarURL('/peliculas/crear');
             editingId = null;
             document.getElementById('modalTitle').textContent = 'Nueva Película';
             document.getElementById('peliculaForm').reset();
             document.getElementById('peliculaModal').style.display = 'block';
         }
 
-        // Cerrar modal
-        function closeModal() {
-            document.getElementById('peliculaModal').style.display = 'none';
-        }
-
-        // Editar película
-        function editPelicula(id) {
+        // Abrir modal para EDITAR película
+        function editarPelicula(id) {
+            cambiarURL(`/peliculas/editar/${id}`);
             const pelicula = peliculas.find(p => p.id_peliculas === id);
             if (pelicula) {
                 editingId = id;
@@ -287,11 +290,17 @@
             }
         }
 
+        // Cerrar modal y restaurar URL
+        function closeModal() {
+            window.history.pushState(null, null, '/peliculas');
+            document.getElementById('peliculaModal').style.display = 'none';
+        }
+
         // Eliminar película
         async function deletePelicula(id) {
             if (confirm('¿Estás seguro de que quieres eliminar esta película?')) {
                 try {
-                    const response = await fetch(`/api/peliculas/api/${id}`, {
+                    const response = await fetch(`/peliculas/eliminar/${id}`, {
                         method: 'DELETE'
                     });
                     const data = await response.json();
@@ -316,7 +325,7 @@
             const data = Object.fromEntries(formData.entries());
             
             try {
-                const url = editingId ? `/api/peliculas/api/${editingId}` : '/api/peliculas/api';
+                const url = editingId ? `/peliculas/actualizar/${editingId}` : '/peliculas/crear';
                 const method = editingId ? 'PUT' : 'POST';
                 
                 const response = await fetch(url, {
@@ -334,7 +343,8 @@
                     closeModal();
                     loadPeliculas();
                 } else {
-                    showMessage('Error: ' + result.message, 'error');
+                    const errorMessage = result.errores ? result.errores.join(', ') : result.message;
+                    showMessage('Error: ' + errorMessage, 'error');
                 }
             } catch (error) {
                 showMessage('Error de conexión: ' + error.message, 'error');
@@ -357,7 +367,11 @@
                 closeModal();
             }
         }
+
+        // Manejar el botón "Atrás" del navegador
+        window.onpopstate = function(event) {
+            document.getElementById('peliculaModal').style.display = 'none';
+        }
     </script>
 </body>
 </html>
-

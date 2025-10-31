@@ -27,11 +27,7 @@ app.use('/funciones', funcionRoutes);
 app.use('/salas', salaRoutes);
 app.use('/horarios', horarioRoutes);
 
-// Rutas API
-app.use('/api/peliculas', peliculaRoutes);
-app.use('/api/funciones', funcionRoutes);
-app.use('/api/salas', salaRoutes);
-app.use('/api/horarios', horarioRoutes);
+
 
 // Ruta de bienvenida - Página principal
 app.get('/', (req, res) => {
