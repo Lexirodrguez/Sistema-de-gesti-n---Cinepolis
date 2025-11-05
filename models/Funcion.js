@@ -1,84 +1,99 @@
 const db = require('../config/database');
 
 class Funcion {
-	// Obtener todas las funciones
-	static async getAll() {
-		try {
-			const [rows] = await db.execute('SELECT * FROM funcion ORDER BY id_funcion DESC');
-			return rows;
-		} catch (error) {
-			throw new Error(`Error al obtener funciones: ${error.message}`);
-		}
-	}
+  static getTableName() {
+    return 'funcion';
+  }
 
-	// Obtener funcion por ID
-	static async getById(id) {
-		try {
-			const [rows] = await db.execute(
-				'SELECT * FROM funcion WHERE id_funcion = ?',
-				[id]
-			);
+  static getIdField() {
+    return 'id_funcion';
+  }
 
-			if (rows.length === 0) {
-				return null;
-			}
+  // Obtener todas las funciones con datos relacionados
+  static async getAll() {
+    const [rows] = await db.execute(
+      `SELECT 
+        f.id_funcion,
+        f.fechahora_funcion,
+        f.estado_funcion,
+        f.id_peliculasfuncion,
+        f.id_salafuncion,
+        f.id_horariofuncion,
+        p.titulo_peliculas as titulo_pelicula,
+        s.nombre_sala,
+        s.tipo_sala,
+        h.nombre_horario,
+        h.hora_horario
+      FROM ${this.getTableName()} f
+      LEFT JOIN peliculas p ON f.id_peliculasfuncion = p.id_peliculas
+      LEFT JOIN sala s ON f.id_salafuncion = s.id_sala
+      LEFT JOIN horario h ON f.id_horariofuncion = h.id_horario
+      ORDER BY f.${this.getIdField()} DESC`
+    );
+    return rows;
+  }
 
-			return rows[0];
-		} catch (error) {
-			throw new Error(`Error al obtener funcion: ${error.message}`);
-		}
-	}
+  // Obtener función por ID con datos relacionados
+  static async getById(id) {
+    const [rows] = await db.execute(
+      `SELECT 
+        f.id_funcion,
+        f.fechahora_funcion,
+        f.estado_funcion,
+        f.id_peliculasfuncion,
+        f.id_salafuncion,
+        f.id_horariofuncion,
+        p.titulo_peliculas as titulo_pelicula,
+        s.nombre_sala,
+        s.tipo_sala,
+        h.nombre_horario,
+        h.hora_horario
+      FROM ${this.getTableName()} f
+      LEFT JOIN peliculas p ON f.id_peliculasfuncion = p.id_peliculas
+      LEFT JOIN sala s ON f.id_salafuncion = s.id_sala
+      LEFT JOIN horario h ON f.id_horariofuncion = h.id_horario
+      WHERE f.${this.getIdField()} = ?`,
+      [id]
+    );
+    return rows.length > 0 ? rows[0] : null;
+  }
 
-	// Crear nueva funcion
-	static async create(funcionData) {
-		const { fechahora_funcion, estado_funcion, id_peliculasfuncion, id_salafuncion, id_horariofuncion } = funcionData;
-		try {
-			const [result] = await db.execute(
-				'INSERT INTO funcion (fechahora_funcion, estado_funcion, id_peliculasfuncion, id_salafuncion, id_horariofuncion) VALUES (?, ?, ?, ?, ?)',
-				[fechahora_funcion, estado_funcion, id_peliculasfuncion, id_salafuncion, id_horariofuncion]
-			);
+  // Crear nueva función
+  static async create(funcionData) {
+    const { fechahora_funcion, estado_funcion, id_peliculasfuncion, id_salafuncion, id_horariofuncion } = funcionData;
+    
+    const [result] = await db.execute(
+      `INSERT INTO ${this.getTableName()} (fechahora_funcion, estado_funcion, id_peliculasfuncion, id_salafuncion, id_horariofuncion) VALUES (?, ?, ?, ?, ?)`,
+      [fechahora_funcion, estado_funcion, id_peliculasfuncion, id_salafuncion, id_horariofuncion]
+    );
+    
+    return {
+      id_funcion: result.insertId,
+      ...funcionData
+    };
+  }
 
-			return {
-				id_funcion: result.insertId,
-				fechahora_funcion,
-				estado_funcion,
-				id_peliculasfuncion,
-				id_salafuncion,
-				id_horariofuncion
-			};
-		} catch (error) {
-			throw new Error(`Error al crear funcion: ${error.message}`);
-		}
-	}
+  // Actualizar función
+  static async update(id, funcionData) {
+    const { fechahora_funcion, estado_funcion, id_peliculasfuncion, id_salafuncion, id_horariofuncion } = funcionData;
+    
+    const [result] = await db.execute(
+      `UPDATE ${this.getTableName()} SET fechahora_funcion = ?, estado_funcion = ?, id_peliculasfuncion = ?, id_salafuncion = ?, id_horariofuncion = ? WHERE ${this.getIdField()} = ?`,
+      [fechahora_funcion, estado_funcion, id_peliculasfuncion, id_salafuncion, id_horariofuncion, id]
+    );
+    
+    return result.affectedRows > 0;
+  }
 
-	// Actualizar funcion
-	static async update(id, funcionData) {
-		const { fechahora_funcion, estado_funcion, id_peliculasfuncion, id_salafuncion, id_horariofuncion } = funcionData;
-		try {
-			const [result] = await db.execute(
-				'UPDATE funcion SET fechahora_funcion = ?, estado_funcion = ?, id_peliculasfuncion = ?, id_salafuncion = ?, id_horariofuncion = ? WHERE id_funcion = ?',
-				[fechahora_funcion, estado_funcion, id_peliculasfuncion, id_salafuncion, id_horariofuncion, id]
-			);
-
-			return result.affectedRows > 0;
-		} catch (error) {
-			throw new Error(`Error al actualizar funcion: ${error.message}`);
-		}
-	}
-
-	// Eliminar funcion
-	static async delete(id) {
-		try {
-			const [result] = await db.execute(
-				'DELETE FROM funcion WHERE id_funcion = ?',
-				[id]
-			);
-
-			return result.affectedRows > 0;
-		} catch (error) {
-			throw new Error(`Error al eliminar funcion: ${error.message}`);
-		}
-	}
+  // Eliminar función
+  static async delete(id) {
+    const [result] = await db.execute(
+      `DELETE FROM ${this.getTableName()} WHERE ${this.getIdField()} = ?`,
+      [id]
+    );
+    
+    return result.affectedRows > 0;
+  }
 }
 
 module.exports = Funcion;

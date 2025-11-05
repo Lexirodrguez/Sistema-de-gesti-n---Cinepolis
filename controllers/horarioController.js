@@ -1,169 +1,193 @@
 const Horario = require('../models/Horario');
+const Funcion = require('../models/Funcion');
 
-// Obtener todos los horarios
-const getAllHorarios = async (req, res) => {
-  try {
-    const horarios = await Horario.getAll();
-    
-    res.json({
-      success: true,
-      data: horarios,
-      count: horarios.length
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Error al obtener los horarios',
-      error: error.message
+class HorarioController {
+  // GET /api/horarios - Obtener todos los horarios
+  static getAll() {
+    return new Promise((resolve, reject) => {
+      Horario.getAll()
+        .then(horarios => {
+          resolve(horarios);
+        })
+        .catch(error => {
+          reject(error);
+        });
     });
   }
-};
 
-// Obtener horario por ID
-const getHorarioById = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const horario = await Horario.getById(id);
-    
-    if (!horario) {
-      return res.status(404).json({
-        success: false,
-        message: 'Horario no encontrado'
-      });
-    }
-    
-    res.json({
-      success: true,
-      data: horario
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Error al obtener el horario',
-      error: error.message
+  // GET /api/horarios/:id - Obtener un horario por ID
+  static getById(id) {
+    return new Promise((resolve, reject) => {
+      // Validación de negocio
+      if (!id || isNaN(id) || id <= 0) {
+        reject(new Error('ID de horario inválido'));
+        return;
+      }
+
+      Horario.getById(id)
+        .then(horario => {
+          if (!horario) {
+            reject(new Error('Horario no encontrado'));
+            return;
+          }
+          resolve(horario);
+        })
+        .catch(error => {
+          reject(error);
+        });
     });
   }
-};
 
-// Crear nuevo horario
-const createHorario = async (req, res) => {
-  try {
-    const { nombre_horario, hora_horario } = req.body;
-    
-    // Validaciones básicas
-    if (!nombre_horario || !hora_horario) {
-      return res.status(400).json({
-        success: false,
-        message: 'Todos los campos son requeridos: nombre_horario, hora_horario'
-      });
-    }
-    
-    const nuevoHorario = await Horario.create({
-      nombre_horario,
-      hora_horario
-    });
-    
-    res.status(201).json({
-      success: true,
-      message: 'Horario creado exitosamente',
-      data: nuevoHorario
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Error al crear el horario',
-      error: error.message
-    });
-  }
-};
-
-// Actualizar horario
-const updateHorario = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { nombre_horario, hora_horario } = req.body;
-    
-    // Verificar si el horario existe
-    const horarioExistente = await Horario.getById(id);
-    if (!horarioExistente) {
-      return res.status(404).json({
-        success: false,
-        message: 'Horario no encontrado'
-      });
-    }
-    
-    const updated = await Horario.update(id, {
-      nombre_horario,
-      hora_horario
-    });
-    
-    if (updated) {
-      const horarioActualizado = await Horario.getById(id);
+  // POST /api/horarios - Crear un nuevo horario
+  static create(horarioData) {
+    return new Promise((resolve, reject) => {
+      // Lógica de negocio: validaciones
+      const { nombre_horario, hora_horario } = horarioData;
       
-      res.json({
-        success: true,
-        message: 'Horario actualizado exitosamente',
-        data: horarioActualizado
-      });
-    } else {
-      res.status(400).json({
-        success: false,
-        message: 'No se pudo actualizar el horario'
-      });
-    }
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Error al actualizar el horario',
-      error: error.message
+      if (!nombre_horario || nombre_horario.trim() === '') {
+        reject(new Error('El nombre del horario es requerido'));
+        return;
+      }
+      
+      if (!hora_horario) {
+        reject(new Error('La hora del horario es requerida'));
+        return;
+      }
+      
+      // Validar formato de hora (HH:MM)
+      const horaRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
+      if (!horaRegex.test(hora_horario)) {
+        reject(new Error('El formato de hora debe ser HH:MM (ej: 14:30)'));
+        return;
+      }
+      
+      // Verificar duplicados
+      Horario.getAll()
+        .then(horariosExistentes => {
+          const existeDuplicado = horariosExistentes.some(
+            h => h.hora_horario === hora_horario
+          );
+          
+          if (existeDuplicado) {
+            reject(new Error('Ya existe un horario con esa hora'));
+            return;
+          }
+          
+          return Horario.create({
+            nombre_horario: nombre_horario.trim(),
+            hora_horario
+          });
+        })
+        .then(result => {
+          resolve(result);
+        })
+        .catch(error => {
+          reject(error);
+        });
     });
   }
-};
 
-// Eliminar horario
-const deleteHorario = async (req, res) => {
-  try {
-    const { id } = req.params;
-    
-    // Verificar si el horario existe
-    const horarioExistente = await Horario.getById(id);
-    if (!horarioExistente) {
-      return res.status(404).json({
-        success: false,
-        message: 'Horario no encontrado'
-      });
-    }
-    
-    const deleted = await Horario.delete(id);
-    
-    if (deleted) {
-      res.json({
-        success: true,
-        message: 'Horario eliminado exitosamente'
-      });
-    } else {
-      res.status(400).json({
-        success: false,
-        message: 'No se pudo eliminar el horario'
-      });
-    }
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Error al eliminar el horario',
-      error: error.message
+  // PUT /api/horarios/:id - Actualizar un horario
+  static update(id, horarioData) {
+    return new Promise((resolve, reject) => {
+      // Validación del ID
+      if (!id || isNaN(id) || id <= 0) {
+        reject(new Error('ID de horario inválido'));
+        return;
+      }
+      
+      // Lógica de negocio: validaciones
+      const { nombre_horario, hora_horario } = horarioData;
+      
+      if (!nombre_horario || nombre_horario.trim() === '') {
+        reject(new Error('El nombre del horario es requerido'));
+        return;
+      }
+      
+      if (!hora_horario) {
+        reject(new Error('La hora del horario es requerida'));
+        return;
+      }
+      
+      // Validar formato de hora (HH:MM)
+      const horaRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
+      if (!horaRegex.test(hora_horario)) {
+        reject(new Error('El formato de hora debe ser HH:MM (ej: 14:30)'));
+        return;
+      }
+      
+      Horario.getById(id)
+        .then(horario => {
+          if (!horario) {
+            reject(new Error('Horario no encontrado'));
+            return;
+          }
+          
+          // Verificar duplicados (excluyendo el horario actual)
+          return Horario.getAll()
+            .then(horariosExistentes => {
+              const existeDuplicado = horariosExistentes.some(
+                h => h.id_horario !== parseInt(id) 
+                && h.hora_horario === hora_horario
+              );
+              
+              if (existeDuplicado) {
+                reject(new Error('Ya existe otro horario con esa hora'));
+                return;
+              }
+              
+              return Horario.update(id, {
+                nombre_horario: nombre_horario.trim(),
+                hora_horario
+              });
+            });
+        })
+        .then(result => {
+          resolve(result);
+        })
+        .catch(error => {
+          reject(error);
+        });
     });
   }
-};
 
-module.exports = {
-  getAllHorarios,
-  getHorarioById,
-  createHorario,
-  updateHorario,
-  deleteHorario
-};
+  // DELETE /api/horarios/:id - Eliminar un horario
+  static delete(id) {
+    return new Promise((resolve, reject) => {
+      // Validación del ID
+      if (!id || isNaN(id) || id <= 0) {
+        reject(new Error('ID de horario inválido'));
+        return;
+      }
+      
+      Horario.getById(id)
+        .then(horario => {
+          if (!horario) {
+            reject(new Error('Horario no encontrado'));
+            return;
+          }
+          
+          // Verificar si el horario está siendo usado en funciones
+          return Funcion.getAll()
+            .then(funcionesExistentes => {
+              const tieneFunciones = funcionesExistentes.some(f => f.id_horariofuncion === parseInt(id));
+              
+              if (tieneFunciones) {
+                reject(new Error('No se puede eliminar el horario porque tiene funciones asignadas'));
+                return;
+              }
+              
+              return Horario.delete(id);
+            });
+        })
+        .then(result => {
+          resolve(result);
+        })
+        .catch(error => {
+          reject(error);
+        });
+    });
+  }
+}
 
-
-
-
+module.exports = HorarioController;

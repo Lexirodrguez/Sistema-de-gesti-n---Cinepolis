@@ -1,168 +1,193 @@
 const Pelicula = require('../models/Pelicula');
 
-// Obtener todas las películas
-const getAllPeliculas = async (req, res) => {
-  try {
-    const peliculas = await Pelicula.getAll();
-    
-    res.json({
-      success: true,
-      data: peliculas,
-      count: peliculas.length
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Error al obtener las películas',
-      error: error.message
+class PeliculaController {
+  // GET /api/peliculas - Obtener todas las películas
+  static getAll() {
+    return new Promise((resolve, reject) => {
+      Pelicula.getAll()
+        .then(peliculas => {
+          resolve(peliculas);
+        })
+        .catch(error => {
+          reject(error);
+        });
     });
   }
-};
 
-// Obtener película por ID
-const getPeliculaById = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const pelicula = await Pelicula.getById(id);
-    
-    if (!pelicula) {
-      return res.status(404).json({
-        success: false,
-        message: 'Película no encontrada'
-      });
-    }
-    
-    res.json({
-      success: true,
-      data: pelicula
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Error al obtener la película',
-      error: error.message
+  // GET /api/peliculas/:id - Obtener una película por ID
+  static getById(id) {
+    return new Promise((resolve, reject) => {
+      // Validación de negocio
+      if (!id || isNaN(id) || id <= 0) {
+        reject(new Error('ID de película inválido'));
+        return;
+      }
+
+      Pelicula.getById(id)
+        .then(pelicula => {
+          if (!pelicula) {
+            reject(new Error('Película no encontrada'));
+            return;
+          }
+          resolve(pelicula);
+        })
+        .catch(error => {
+          reject(error);
+        });
     });
   }
-};
 
-// Crear nueva película
-const createPelicula = async (req, res) => {
-  try {
-    const { titulo_peliculas, duracion_peliculas, año_peliculas } = req.body;
-    
-    // Validaciones básicas
-    if (!titulo_peliculas || !duracion_peliculas || !año_peliculas) {
-      return res.status(400).json({
-        success: false,
-        message: 'Todos los campos son requeridos: titulo_peliculas, duracion_peliculas, año_peliculas'
-      });
-    }
-    
-    const nuevaPelicula = await Pelicula.create({
-      titulo_peliculas,
-      duracion_peliculas,
-      año_peliculas
-    });
-    
-    res.status(201).json({
-      success: true,
-      message: 'Película creada exitosamente',
-      data: nuevaPelicula
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Error al crear la película',
-      error: error.message
-    });
-  }
-};
-
-// Actualizar película
-const updatePelicula = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { titulo_peliculas, duracion_peliculas, año_peliculas } = req.body;
-    
-    // Verificar si la película existe
-    const peliculaExistente = await Pelicula.getById(id);
-    if (!peliculaExistente) {
-      return res.status(404).json({
-        success: false,
-        message: 'Película no encontrada'
-      });
-    }
-    
-    const updated = await Pelicula.update(id, {
-      titulo_peliculas,
-      duracion_peliculas,
-      año_peliculas
-    });
-    
-    if (updated) {
-      const peliculaActualizada = await Pelicula.getById(id);
+  // POST /api/peliculas - Crear una nueva película
+  static create(peliculaData) {
+    return new Promise((resolve, reject) => {
+      // Lógica de negocio: validaciones
+      const { titulo_peliculas, duracion_peliculas, año_peliculas } = peliculaData;
       
-      res.json({
-        success: true,
-        message: 'Película actualizada exitosamente',
-        data: peliculaActualizada
-      });
-    } else {
-      res.status(400).json({
-        success: false,
-        message: 'No se pudo actualizar la película'
-      });
-    }
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Error al actualizar la película',
-      error: error.message
+      if (!titulo_peliculas || titulo_peliculas.trim() === '') {
+        reject(new Error('El título es requerido'));
+        return;
+      }
+      
+      if (!duracion_peliculas || duracion_peliculas <= 0) {
+        reject(new Error('La duración debe ser mayor a 0 minutos'));
+        return;
+      }
+      
+      if (!año_peliculas) {
+        reject(new Error('El año es requerido'));
+        return;
+      }
+      
+      const añoActual = new Date().getFullYear();
+      if (año_peliculas < 1900 || año_peliculas > añoActual + 1) {
+        reject(new Error(`El año debe estar entre 1900 y ${añoActual + 1}`));
+        return;
+      }
+      
+      // Verificar duplicados
+      Pelicula.getAll()
+        .then(peliculasExistentes => {
+          const existeDuplicado = peliculasExistentes.some(
+            p => p.titulo_peliculas.toLowerCase().trim() === titulo_peliculas.toLowerCase().trim() 
+            && p.año_peliculas === año_peliculas
+          );
+          
+          if (existeDuplicado) {
+            reject(new Error('Ya existe una película con el mismo título y año'));
+            return;
+          }
+          
+          return Pelicula.create({
+            titulo_peliculas: titulo_peliculas.trim(),
+            duracion_peliculas,
+            año_peliculas
+          });
+        })
+        .then(result => {
+          resolve(result);
+        })
+        .catch(error => {
+          reject(error);
+        });
     });
   }
-};
 
-// Eliminar película
-const deletePelicula = async (req, res) => {
-  try {
-    const { id } = req.params;
-    
-    // Verificar si la película existe
-    const peliculaExistente = await Pelicula.getById(id);
-    if (!peliculaExistente) {
-      return res.status(404).json({
-        success: false,
-        message: 'Película no encontrada'
-      });
-    }
-    
-    const deleted = await Pelicula.delete(id);
-    
-    if (deleted) {
-      res.json({
-        success: true,
-        message: 'Película eliminada exitosamente'
-      });
-    } else {
-      res.status(400).json({
-        success: false,
-        message: 'No se pudo eliminar la película'
-      });
-    }
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Error al eliminar la película',
-      error: error.message
+  // PUT /api/peliculas/:id - Actualizar una película
+  static update(id, peliculaData) {
+    return new Promise((resolve, reject) => {
+      // Validación del ID
+      if (!id || isNaN(id) || id <= 0) {
+        reject(new Error('ID de película inválido'));
+        return;
+      }
+      
+      // Lógica de negocio: validaciones
+      const { titulo_peliculas, duracion_peliculas, año_peliculas } = peliculaData;
+      
+      if (!titulo_peliculas || titulo_peliculas.trim() === '') {
+        reject(new Error('El título es requerido'));
+        return;
+      }
+      
+      if (!duracion_peliculas || duracion_peliculas <= 0) {
+        reject(new Error('La duración debe ser mayor a 0 minutos'));
+        return;
+      }
+      
+      if (!año_peliculas) {
+        reject(new Error('El año es requerido'));
+        return;
+      }
+      
+      const añoActual = new Date().getFullYear();
+      if (año_peliculas < 1900 || año_peliculas > añoActual + 1) {
+        reject(new Error(`El año debe estar entre 1900 y ${añoActual + 1}`));
+        return;
+      }
+      
+      Pelicula.getById(id)
+        .then(pelicula => {
+          if (!pelicula) {
+            reject(new Error('Película no encontrada'));
+            return;
+          }
+          
+          // Verificar duplicados (excluyendo la película actual)
+          return Pelicula.getAll()
+            .then(peliculasExistentes => {
+              const existeDuplicado = peliculasExistentes.some(
+                p => p.id_peliculas !== parseInt(id) 
+                && p.titulo_peliculas.toLowerCase().trim() === titulo_peliculas.toLowerCase().trim() 
+                && p.año_peliculas === año_peliculas
+              );
+              
+              if (existeDuplicado) {
+                reject(new Error('Ya existe otra película con el mismo título y año'));
+                return;
+              }
+              
+              return Pelicula.update(id, {
+                titulo_peliculas: titulo_peliculas.trim(),
+                duracion_peliculas,
+                año_peliculas
+              });
+            });
+        })
+        .then(result => {
+          resolve(result);
+        })
+        .catch(error => {
+          reject(error);
+        });
     });
   }
-};
 
+  // DELETE /api/peliculas/:id - Eliminar una película
+  static delete(id) {
+    return new Promise((resolve, reject) => {
+      // Validación del ID
+      if (!id || isNaN(id) || id <= 0) {
+        reject(new Error('ID de película inválido'));
+        return;
+      }
+      
+      Pelicula.getById(id)
+        .then(pelicula => {
+          if (!pelicula) {
+            reject(new Error('Película no encontrada'));
+            return;
+          }
 
-module.exports = {
-  getAllPeliculas,
-  getPeliculaById,
-  createPelicula,
-  updatePelicula,
-  deletePelicula
-};
+          return Pelicula.delete(id);
+        })
+        .then(result => {
+          resolve(result);
+        })
+        .catch(error => {
+          reject(error);
+        });
+    });
+  }
+}
+
+module.exports = PeliculaController;

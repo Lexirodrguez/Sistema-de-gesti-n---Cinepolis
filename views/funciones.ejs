@@ -12,7 +12,7 @@
             background-color: #f5f5f5;
         }
         .container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
             background: white;
             padding: 30px;
@@ -56,6 +56,12 @@
         .btn-success:hover {
             background: #218838;
         }
+        .btn-info {
+            background: #17a2b8;
+        }
+        .btn-info:hover {
+            background: #138496;
+        }
         .form-group {
             margin-bottom: 15px;
         }
@@ -91,7 +97,7 @@
             padding: 20px;
             border-radius: 10px;
             width: 80%;
-            max-width: 500px;
+            max-width: 600px;
         }
         .close {
             color: #aaa;
@@ -143,50 +149,82 @@
             border-radius: 4px;
             margin: 10px 0;
         }
+        .welcome-section {
+            text-align: center;
+            padding: 60px 20px;
+        }
+        .welcome-section h2 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .welcome-section p {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 18px;
+        }
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 30px;
+        }
+        .action-btn {
+            padding: 15px 30px;
+            font-size: 16px;
+            min-width: 150px;
+        }
+        .hidden {
+            display: none;
+        }
+        .header-buttons {
+            display: flex;
+            gap: 10px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
             <h1>🎭 <%= title %></h1>
-            <div>
-                <a href="/" class="btn">← Volver</a>
-                <button class="btn btn-success" onclick="openModal()">+ Nueva Función</button>
+            <div class="header-buttons">
+                <a href="/" class="btn">← Inicio</a>
+                <button class="btn btn-info" onclick="mostrarInicio()" id="btnVolverInicio" style="display: none;">← Volver al Inicio</button>
             </div>
         </div>
 
         <div id="message"></div>
-        <div id="loading" class="loading">Cargando funciones...</div>
-        <div id="funciones-container"></div>
+
+        <!-- Sección de Bienvenida -->
+        <div id="welcomeSection" class="welcome-section">
+            <h2>Bienvenido al Sistema de Gestión de Funciones</h2>
+            <p>Selecciona una opción para comenzar:</p>
+            <div class="action-buttons">
+                <button class="btn btn-info action-btn" onclick="mostrarListado()">
+                    📋 Listar Funciones
+                </button>
+                <button class="btn btn-success action-btn" onclick="abrirModalCrear()">
+                    ➕ Nueva Función
+                </button>
+            </div>
+        </div>
+
+        <!-- Sección de Listado -->
+        <div id="listSection" class="hidden">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3>Lista de Funciones</h3>
+                <button class="btn btn-success" onclick="abrirModalCrear()">+ Nueva Función</button>
+            </div>
+            <div id="loading" class="loading">Cargando funciones...</div>
+            <div id="funciones-container"></div>
+        </div>
 
         <!-- Modal para agregar/editar función -->
         <div id="funcionModal" class="modal">
             <div class="modal-content">
-                <span class="close" onclick="closeModal()">&times;</span>
+                <span class="close" onclick="cerrarModal()">&times;</span>
                 <h2 id="modalTitle">Nueva Función</h2>
                 <form id="funcionForm">
                     <input type="hidden" id="funcionId" name="id">
-                    
-                    <div class="form-group">
-                        <label for="id_peliculasfuncion">Película:</label>
-                        <select id="id_peliculasfuncion" name="id_peliculasfuncion" required>
-                            <option value="">Seleccionar película...</option>
-                        </select>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="id_salafuncion">Sala:</label>
-                        <select id="id_salafuncion" name="id_salafuncion" required>
-                            <option value="">Seleccionar sala...</option>
-                        </select>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="id_horariofuncion">Horario:</label>
-                        <select id="id_horariofuncion" name="id_horariofuncion" required>
-                            <option value="">Seleccionar horario...</option>
-                        </select>
-                    </div>
                     
                     <div class="form-group">
                         <label for="fechahora_funcion">Fecha y Hora:</label>
@@ -201,8 +239,38 @@
                         </select>
                     </div>
                     
+                    <div class="form-group">
+                        <label for="id_peliculasfuncion">Película:</label>
+                        <select id="id_peliculasfuncion" name="id_peliculasfuncion" required>
+                            <option value="">Seleccionar película...</option>
+                            <% peliculas.forEach(pelicula => { %>
+                                <option value="<%= pelicula.id_peliculas %>"><%= pelicula.titulo_peliculas %></option>
+                            <% }); %>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="id_salafuncion">Sala:</label>
+                        <select id="id_salafuncion" name="id_salafuncion" required>
+                            <option value="">Seleccionar sala...</option>
+                            <% salas.forEach(sala => { %>
+                                <option value="<%= sala.id_sala %>"><%= sala.nombre_sala %> - <%= sala.tipo_sala %></option>
+                            <% }); %>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="id_horariofuncion">Horario:</label>
+                        <select id="id_horariofuncion" name="id_horariofuncion" required>
+                            <option value="">Seleccionar horario...</option>
+                            <% horarios.forEach(horario => { %>
+                                <option value="<%= horario.id_horario %>"><%= horario.nombre_horario %> - <%= horario.hora_horario %></option>
+                            <% }); %>
+                        </select>
+                    </div>
+                    
                     <div style="text-align: right; margin-top: 20px;">
-                        <button type="button" onclick="closeModal()" class="btn">Cancelar</button>
+                        <button type="button" onclick="cerrarModal()" class="btn">Cancelar</button>
                         <button type="submit" class="btn btn-success">Guardar</button>
                     </div>
                 </form>
@@ -212,78 +280,69 @@
 
     <script>
         let funciones = [];
-        let peliculas = [];
-        let salas = [];
-        let horarios = [];
         let editingId = null;
 
-        // Cargar datos al iniciar
+        // Cargar al iniciar
         document.addEventListener('DOMContentLoaded', function() {
-            loadData();
+            mostrarInicio();
         });
 
-        // Cargar todos los datos necesarios
-        async function loadData() {
+        // Mostrar sección de bienvenida
+        function mostrarInicio() {
+            document.getElementById('welcomeSection').classList.remove('hidden');
+            document.getElementById('listSection').classList.add('hidden');
+            document.getElementById('btnVolverInicio').style.display = 'none';
+            document.getElementById('funcionModal').style.display = 'none';
+        }
+
+        // Mostrar listado de funciones
+        function mostrarListado() {
+            document.getElementById('welcomeSection').classList.add('hidden');
+            document.getElementById('listSection').classList.remove('hidden');
+            document.getElementById('btnVolverInicio').style.display = 'inline-block';
+            cargarFunciones();
+        }
+
+        // Abrir modal para crear función desde el inicio
+        function abrirModalCrear() {
+            editingId = null;
+            document.getElementById('modalTitle').textContent = 'Nueva Función';
+            document.getElementById('funcionForm').reset();
+            document.getElementById('funcionModal').style.display = 'block';
+            
+            // Si estamos en la vista de inicio, mostrar también el botón volver
+            if (!document.getElementById('listSection').classList.contains('hidden')) {
+                document.getElementById('btnVolverInicio').style.display = 'inline-block';
+            }
+        }
+
+        // Cargar funciones desde la API
+        async function cargarFunciones() {
             try {
-                const [funcionesRes, peliculasRes, salasRes, horariosRes] = await Promise.all([
-                    fetch('/api/funciones/api'),
-                    fetch('/api/peliculas/api'),
-                    fetch('/api/salas/api'),
-                    fetch('/api/horarios/api')
-                ]);
-
-                const [funcionesData, peliculasData, salasData, horariosData] = await Promise.all([
-                    funcionesRes.json(),
-                    peliculasRes.json(),
-                    salasRes.json(),
-                    horariosRes.json()
-                ]);
-
-                if (funcionesData.success) {
-                    funciones = funcionesData.data;
+                document.getElementById('loading').style.display = 'block';
+                document.getElementById('funciones-container').innerHTML = '';
+                
+                const response = await fetch('/api/funciones');
+                const data = await response.json();
+                
+                document.getElementById('loading').style.display = 'none';
+                
+                if (data.success) {
+                    funciones = data.data;
+                    renderizarFunciones();
+                    showMessage(`${data.count} funciones cargadas correctamente`, 'success');
+                } else {
+                    showMessage('Error al cargar funciones: ' + data.message, 'error');
                 }
-
-                if (peliculasData.success) {
-                    peliculas = peliculasData.data;
-                    populateSelect('id_peliculasfuncion', peliculas, 'id_peliculas', 'titulo_peliculas');
-                }
-
-                if (salasData.success) {
-                    salas = salasData.data;
-                    populateSelect('id_salafuncion', salas, 'id_sala', 'nombre_sala');
-                }
-
-                if (horariosData.success) {
-                    horarios = horariosData.data;
-                    populateSelect('id_horariofuncion', horarios, 'id_horario', 'nombre_horario');
-                }
-
-                // Renderizar funciones después de cargar todos los datos
-                renderFunciones();
-
             } catch (error) {
+                document.getElementById('loading').style.display = 'none';
                 showMessage('Error de conexión: ' + error.message, 'error');
             }
         }
 
-        // Poblar select con datos
-        function populateSelect(selectId, data, valueField, textField) {
-            const select = document.getElementById(selectId);
-            select.innerHTML = '<option value="">Seleccionar...</option>';
-            data.forEach(item => {
-                const option = document.createElement('option');
-                option.value = item[valueField];
-                option.textContent = item[textField];
-                select.appendChild(option);
-            });
-        }
-
         // Renderizar tabla de funciones
-        function renderFunciones() {
+        function renderizarFunciones() {
             const container = document.getElementById('funciones-container');
-            const loading = document.getElementById('loading');
-            
-            loading.style.display = 'none';
             
             if (funciones.length === 0) {
                 container.innerHTML = '<p>No hay funciones registradas.</p>';
@@ -294,10 +353,10 @@
                 <table>
                     <thead>
                         <tr>
+                            <th>Fecha y Hora</th>
                             <th>Película</th>
                             <th>Sala</th>
                             <th>Horario</th>
-                            <th>Fecha y Hora</th>
                             <th>Estado</th>
                             <th>Acciones</th>
                         </tr>
@@ -306,20 +365,20 @@
             `;
 
             funciones.forEach(funcion => {
-                const pelicula = peliculas.find(p => p.id_peliculas === funcion.id_peliculasfuncion);
-                const sala = salas.find(s => s.id_sala === funcion.id_salafuncion);
-                const horario = horarios.find(h => h.id_horario === funcion.id_horariofuncion);
+                // Formatear fecha para mostrar
+                const fecha = new Date(funcion.fechahora_funcion);
+                const fechaFormateada = fecha.toLocaleString('es-ES');
                 
                 html += `
                     <tr>
-                        <td>${pelicula ? pelicula.titulo_peliculas : 'N/A'}</td>
-                        <td>${sala ? sala.nombre_sala : 'N/A'}</td>
-                        <td>${horario ? horario.nombre_horario : 'N/A'}</td>
-                        <td>${funcion.fechahora_funcion}</td>
+                        <td>${fechaFormateada}</td>
+                        <td>${funcion.titulo_pelicula || 'N/A'}</td>
+                        <td>${funcion.nombre_sala || 'N/A'}</td>
+                        <td>${funcion.nombre_horario || 'N/A'}</td>
                         <td>${funcion.estado_funcion ? 'Activa' : 'Inactiva'}</td>
                         <td class="actions">
-                            <button class="btn" onclick="editFuncion(${funcion.id_funcion})">Editar</button>
-                            <button class="btn btn-danger" onclick="deleteFuncion(${funcion.id_funcion})">Eliminar</button>
+                            <button class="btn" onclick="editarFuncion(${funcion.id_funcion})">Editar</button>
+                            <button class="btn btn-danger" onclick="eliminarFuncion(${funcion.id_funcion})">Eliminar</button>
                         </td>
                     </tr>
                 `;
@@ -329,47 +388,44 @@
             container.innerHTML = html;
         }
 
-        // Abrir modal
-        function openModal() {
-            editingId = null;
-            document.getElementById('modalTitle').textContent = 'Nueva Función';
-            document.getElementById('funcionForm').reset();
-            document.getElementById('funcionModal').style.display = 'block';
-        }
-
-        // Cerrar modal
-        function closeModal() {
-            document.getElementById('funcionModal').style.display = 'none';
-        }
-
-        // Editar función
-        function editFuncion(id) {
+        // Abrir modal para EDITAR función
+        function editarFuncion(id) {
             const funcion = funciones.find(f => f.id_funcion === id);
             if (funcion) {
                 editingId = id;
                 document.getElementById('modalTitle').textContent = 'Editar Función';
                 document.getElementById('funcionId').value = funcion.id_funcion;
-                document.getElementById('id_peliculasfuncion').value = funcion.id_peliculasfuncion;
-                document.getElementById('id_salafuncion').value = funcion.id_salafuncion;
-                document.getElementById('id_horariofuncion').value = funcion.id_horariofuncion;
-                document.getElementById('fechahora_funcion').value = funcion.fechahora_funcion;
-                document.getElementById('estado_funcion').value = funcion.estado_funcion;
+                
+                // Formatear fecha para input datetime-local
+                const fecha = new Date(funcion.fechahora_funcion);
+                const fechaISO = fecha.toISOString().slice(0, 16);
+                document.getElementById('fechahora_funcion').value = fechaISO;
+                
+                document.getElementById('estado_funcion').value = funcion.estado_funcion.toString();
+                document.getElementById('id_peliculasfuncion').value = funcion.id_peliculasfuncion || funcion.id_peliculas;
+                document.getElementById('id_salafuncion').value = funcion.id_salafuncion || funcion.id_sala;
+                document.getElementById('id_horariofuncion').value = funcion.id_horariofuncion || funcion.id_horario;
                 document.getElementById('funcionModal').style.display = 'block';
             }
         }
 
+        // Cerrar modal
+        function cerrarModal() {
+            document.getElementById('funcionModal').style.display = 'none';
+        }
+
         // Eliminar función
-        async function deleteFuncion(id) {
+        async function eliminarFuncion(id) {
             if (confirm('¿Estás seguro de que quieres eliminar esta función?')) {
                 try {
-                    const response = await fetch(`/api/funciones/api/${id}`, {
+                    const response = await fetch(`/api/funciones/${id}`, {
                         method: 'DELETE'
                     });
                     const data = await response.json();
                     
                     if (data.success) {
                         showMessage('Función eliminada correctamente', 'success');
-                        loadData();
+                        cargarFunciones();
                     } else {
                         showMessage('Error al eliminar: ' + data.message, 'error');
                     }
@@ -387,7 +443,7 @@
             const data = Object.fromEntries(formData.entries());
             
             try {
-                const url = editingId ? `/api/funciones/api/${editingId}` : '/api/funciones/api';
+                const url = editingId ? `/api/funciones/${editingId}` : '/api/funciones';
                 const method = editingId ? 'PUT' : 'POST';
                 
                 const response = await fetch(url, {
@@ -402,10 +458,17 @@
                 
                 if (result.success) {
                     showMessage(editingId ? 'Función actualizada correctamente' : 'Función creada correctamente', 'success');
-                    closeModal();
-                    loadData();
+                    cerrarModal();
+                    // Si estamos en el listado, recargar las funciones
+                    if (!document.getElementById('listSection').classList.contains('hidden')) {
+                        cargarFunciones();
+                    } else {
+                        // Si creamos desde el inicio, mostrar el listado automáticamente
+                        mostrarListado();
+                    }
                 } else {
-                    showMessage('Error: ' + result.message, 'error');
+                    const errorMessage = result.errores ? result.errores.join(', ') : result.message;
+                    showMessage('Error: ' + errorMessage, 'error');
                 }
             } catch (error) {
                 showMessage('Error de conexión: ' + error.message, 'error');
@@ -418,17 +481,17 @@
             messageDiv.innerHTML = `<div class="${type}">${message}</div>`;
             setTimeout(() => {
                 messageDiv.innerHTML = '';
-            }, 3000);
+            }, 5000);
         }
 
         // Cerrar modal al hacer clic fuera
         window.onclick = function(event) {
             const modal = document.getElementById('funcionModal');
             if (event.target === modal) {
-                closeModal();
+                cerrarModal();
             }
         }
+
     </script>
 </body>
 </html>
-

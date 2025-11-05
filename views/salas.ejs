@@ -56,6 +56,12 @@
         .btn-success:hover {
             background: #218838;
         }
+        .btn-info {
+            background: #17a2b8;
+        }
+        .btn-info:hover {
+            background: #138496;
+        }
         .form-group {
             margin-bottom: 15px;
         }
@@ -143,6 +149,33 @@
             border-radius: 4px;
             margin: 10px 0;
         }
+        .welcome-section {
+            text-align: center;
+            padding: 60px 20px;
+        }
+        .welcome-section h2 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .welcome-section p {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 18px;
+        }
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 30px;
+        }
+        .action-btn {
+            padding: 15px 30px;
+            font-size: 16px;
+            min-width: 150px;
+        }
+        .hidden {
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -150,19 +183,41 @@
         <div class="header">
             <h1>🏢 <%= title %></h1>
             <div>
-                <a href="/" class="btn">← Volver</a>
-                <button class="btn btn-success" onclick="openModal()">+ Nueva Sala</button>
+                <a href="/" class="btn">← Inicio</a>
+                <button class="btn btn-info" onclick="mostrarInicio()" id="btnVolverInicio" style="display: none;">← Volver al Inicio</button>
             </div>
         </div>
 
         <div id="message"></div>
-        <div id="loading" class="loading">Cargando salas...</div>
-        <div id="salas-container"></div>
+
+        <!-- Sección de Bienvenida -->
+        <div id="welcomeSection" class="welcome-section">
+            <h2>Bienvenido al Sistema de Gestión de Salas</h2>
+            <p>Selecciona una opción para comenzar:</p>
+            <div class="action-buttons">
+                <button class="btn btn-info action-btn" onclick="mostrarListado()">
+                    📋 Listar Salas
+                </button>
+                <button class="btn btn-success action-btn" onclick="abrirModalCrear()">
+                    ➕ Nueva Sala
+                </button>
+            </div>
+        </div>
+
+        <!-- Sección de Listado -->
+        <div id="listSection" class="hidden">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3>Lista de Salas</h3>
+                <button class="btn btn-success" onclick="abrirModalCrear()">+ Nueva Sala</button>
+            </div>
+            <div id="loading" class="loading">Cargando salas...</div>
+            <div id="salas-container"></div>
+        </div>
 
         <!-- Modal para agregar/editar sala -->
         <div id="salaModal" class="modal">
             <div class="modal-content">
-                <span class="close" onclick="closeModal()">&times;</span>
+                <span class="close" onclick="cerrarModal()">&times;</span>
                 <h2 id="modalTitle">Nueva Sala</h2>
                 <form id="salaForm">
                     <input type="hidden" id="salaId" name="id">
@@ -178,7 +233,7 @@
                             <option value="">Seleccionar tipo...</option>
                             <option value="2D">2D</option>
                             <option value="3D">3D</option>
-                            <option value="IMAX">IMAX</option>
+                            <option value="4DX">4DX</option>
                             <option value="VIP">VIP</option>
                         </select>
                     </div>
@@ -192,7 +247,7 @@
                     </div>
                     
                     <div style="text-align: right; margin-top: 20px;">
-                        <button type="button" onclick="closeModal()" class="btn">Cancelar</button>
+                        <button type="button" onclick="cerrarModal()" class="btn">Cancelar</button>
                         <button type="submit" class="btn btn-success">Guardar</button>
                     </div>
                 </form>
@@ -204,34 +259,67 @@
         let salas = [];
         let editingId = null;
 
-        // Cargar salas al iniciar
+        // Cargar al iniciar
         document.addEventListener('DOMContentLoaded', function() {
-            loadSalas();
+            mostrarInicio();
         });
 
+        // Mostrar sección de bienvenida
+        function mostrarInicio() {
+            document.getElementById('welcomeSection').classList.remove('hidden');
+            document.getElementById('listSection').classList.add('hidden');
+            document.getElementById('btnVolverInicio').style.display = 'none';
+            document.getElementById('salaModal').style.display = 'none';
+        }
+
+        // Mostrar listado de salas
+        function mostrarListado() {
+            document.getElementById('welcomeSection').classList.add('hidden');
+            document.getElementById('listSection').classList.remove('hidden');
+            document.getElementById('btnVolverInicio').style.display = 'inline-block';
+            cargarSalas();
+        }
+
+        // Abrir modal para crear sala desde el inicio
+        function abrirModalCrear() {
+            editingId = null;
+            document.getElementById('modalTitle').textContent = 'Nueva Sala';
+            document.getElementById('salaForm').reset();
+            document.getElementById('salaModal').style.display = 'block';
+            
+            // Si estamos en la vista de inicio, mostrar también el botón volver
+            if (!document.getElementById('listSection').classList.contains('hidden')) {
+                document.getElementById('btnVolverInicio').style.display = 'inline-block';
+            }
+        }
+
         // Cargar salas desde la API
-        async function loadSalas() {
+        async function cargarSalas() {
             try {
-                const response = await fetch('/api/salas/api');
+                document.getElementById('loading').style.display = 'block';
+                document.getElementById('salas-container').innerHTML = '';
+                
+                const response = await fetch('/api/salas');
                 const data = await response.json();
+                
+                document.getElementById('loading').style.display = 'none';
                 
                 if (data.success) {
                     salas = data.data;
-                    renderSalas();
+                    renderizarSalas();
+                    showMessage(`${data.count} salas cargadas correctamente`, 'success');
                 } else {
                     showMessage('Error al cargar salas: ' + data.message, 'error');
                 }
             } catch (error) {
+                document.getElementById('loading').style.display = 'none';
                 showMessage('Error de conexión: ' + error.message, 'error');
             }
         }
 
         // Renderizar tabla de salas
-        function renderSalas() {
+        function renderizarSalas() {
             const container = document.getElementById('salas-container');
-            const loading = document.getElementById('loading');
-            
-            loading.style.display = 'none';
             
             if (salas.length === 0) {
                 container.innerHTML = '<p>No hay salas registradas.</p>';
@@ -258,8 +346,8 @@
                         <td>${sala.tipo_sala}</td>
                         <td>${sala.estado_sala ? 'Activa' : 'Inactiva'}</td>
                         <td class="actions">
-                            <button class="btn" onclick="editSala(${sala.id_sala})">Editar</button>
-                            <button class="btn btn-danger" onclick="deleteSala(${sala.id_sala})">Eliminar</button>
+                            <button class="btn" onclick="editarSala(${sala.id_sala})">Editar</button>
+                            <button class="btn btn-danger" onclick="eliminarSala(${sala.id_sala})">Eliminar</button>
                         </td>
                     </tr>
                 `;
@@ -269,21 +357,8 @@
             container.innerHTML = html;
         }
 
-        // Abrir modal
-        function openModal() {
-            editingId = null;
-            document.getElementById('modalTitle').textContent = 'Nueva Sala';
-            document.getElementById('salaForm').reset();
-            document.getElementById('salaModal').style.display = 'block';
-        }
-
-        // Cerrar modal
-        function closeModal() {
-            document.getElementById('salaModal').style.display = 'none';
-        }
-
-        // Editar sala
-        function editSala(id) {
+        // Abrir modal para EDITAR sala
+        function editarSala(id) {
             const sala = salas.find(s => s.id_sala === id);
             if (sala) {
                 editingId = id;
@@ -291,23 +366,28 @@
                 document.getElementById('salaId').value = sala.id_sala;
                 document.getElementById('nombre_sala').value = sala.nombre_sala;
                 document.getElementById('tipo_sala').value = sala.tipo_sala;
-                document.getElementById('estado_sala').value = sala.estado_sala;
+                document.getElementById('estado_sala').value = sala.estado_sala.toString();
                 document.getElementById('salaModal').style.display = 'block';
             }
         }
 
+        // Cerrar modal
+        function cerrarModal() {
+            document.getElementById('salaModal').style.display = 'none';
+        }
+
         // Eliminar sala
-        async function deleteSala(id) {
+        async function eliminarSala(id) {
             if (confirm('¿Estás seguro de que quieres eliminar esta sala?')) {
                 try {
-                    const response = await fetch(`/api/salas/api/${id}`, {
+                    const response = await fetch(`/api/salas/${id}`, {
                         method: 'DELETE'
                     });
                     const data = await response.json();
                     
                     if (data.success) {
                         showMessage('Sala eliminada correctamente', 'success');
-                        loadSalas();
+                        cargarSalas();
                     } else {
                         showMessage('Error al eliminar: ' + data.message, 'error');
                     }
@@ -325,7 +405,7 @@
             const data = Object.fromEntries(formData.entries());
             
             try {
-                const url = editingId ? `/api/salas/api/${editingId}` : '/api/salas/api';
+                const url = editingId ? `/api/salas/${editingId}` : '/api/salas';
                 const method = editingId ? 'PUT' : 'POST';
                 
                 const response = await fetch(url, {
@@ -340,10 +420,17 @@
                 
                 if (result.success) {
                     showMessage(editingId ? 'Sala actualizada correctamente' : 'Sala creada correctamente', 'success');
-                    closeModal();
-                    loadSalas();
+                    cerrarModal();
+                    // Si estamos en el listado, recargar las salas
+                    if (!document.getElementById('listSection').classList.contains('hidden')) {
+                        cargarSalas();
+                    } else {
+                        // Si creamos desde el inicio, mostrar el listado automáticamente
+                        mostrarListado();
+                    }
                 } else {
-                    showMessage('Error: ' + result.message, 'error');
+                    const errorMessage = result.errores ? result.errores.join(', ') : result.message;
+                    showMessage('Error: ' + errorMessage, 'error');
                 }
             } catch (error) {
                 showMessage('Error de conexión: ' + error.message, 'error');
@@ -363,10 +450,10 @@
         window.onclick = function(event) {
             const modal = document.getElementById('salaModal');
             if (event.target === modal) {
-                closeModal();
+                cerrarModal();
             }
         }
+
     </script>
 </body>
 </html>
-

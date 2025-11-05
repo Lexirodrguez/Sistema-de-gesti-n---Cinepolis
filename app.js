@@ -3,6 +3,7 @@ const cors = require('cors');
 const path = require('path');
 
 // Importar rutas
+const indexRoutes = require('./routes/index');
 const peliculaRoutes = require('./routes/peliculaRoutes');
 const funcionRoutes = require('./routes/funcionRoutes');
 const salaRoutes = require('./routes/salaRoutes');
@@ -21,22 +22,14 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Rutas para vistas
-app.use('/peliculas', peliculaRoutes);
-app.use('/funciones', funcionRoutes);
-app.use('/salas', salaRoutes);
-app.use('/horarios', horarioRoutes);
+// Rutas principales (vistas)
+app.use('/', indexRoutes);
 
 // Rutas API
 app.use('/api/peliculas', peliculaRoutes);
 app.use('/api/funciones', funcionRoutes);
 app.use('/api/salas', salaRoutes);
 app.use('/api/horarios', horarioRoutes);
-
-// Ruta de bienvenida - Página principal
-app.get('/', (req, res) => {
-  res.render('index', { title: 'Cinepolis - Sistema de Gestión' });
-});
 
 // Manejo de rutas no encontradas
 app.use('*', (req, res) => {
