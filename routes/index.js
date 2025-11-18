@@ -1,33 +1,48 @@
 const express = require('express');
 const router = express.Router();
 const FuncionController = require('../controllers/funcionController');
+const { requireAuth, requireAdmin } = require('../middleware/viewAuthMiddleware');
 
-// GET / - Página principal
-router.get('/', (req, res) => {
+// GET /login - Página de login
+router.get('/login', (req, res) => {
+  // Si ya está autenticado, redirigir al inicio
+  if (req.cookies.token) {
+    return res.redirect('/');
+  }
+  res.render('login', { 
+    title: 'Login - Cinepolis'
+  });
+});
+
+// GET / - Página principal (requiere autenticación)
+router.get('/', requireAuth, (req, res) => {
   res.render('index', { 
     title: 'Cinepolis - Sistema de Gestión',
-    message: 'Bienvenido al sistema de gestión de cine'
+    message: 'Bienvenido al sistema de gestión de cine',
+    user: req.user
   });
 });
 
-// GET /peliculas - Vista de películas
-router.get('/peliculas', (req, res) => {
+// GET /peliculas - Vista de películas (requiere autenticación)
+router.get('/peliculas', requireAuth, (req, res) => {
   res.render('peliculas', { 
     title: 'Gestión de Películas',
-    message: 'Gestión de películas'
+    message: 'Gestión de películas',
+    user: req.user
   });
 });
 
-// GET /salas - Vista de salas
-router.get('/salas', (req, res) => {
+// GET /salas - Vista de salas (requiere autenticación y ser admin)
+router.get('/salas', requireAuth, requireAdmin, (req, res) => {
   res.render('salas', { 
     title: 'Gestión de Salas',
-    message: 'Gestión de salas'
+    message: 'Gestión de salas',
+    user: req.user
   });
 });
 
-// GET /funciones - Vista de funciones
-router.get('/funciones', (req, res) => {
+// GET /funciones - Vista de funciones (requiere autenticación)
+router.get('/funciones', requireAuth, (req, res) => {
   FuncionController.getDatosParaVista()
     .then((resultado) => {
       const { pelicula, sala, horario } = req.query;
@@ -50,7 +65,8 @@ router.get('/funciones', (req, res) => {
         funciones,
         peliculas: resultado.peliculas,
         salas: resultado.salas,
-        horarios: resultado.horarios
+        horarios: resultado.horarios,
+        user: req.user
       });
     })
     .catch((error) => {
@@ -58,11 +74,12 @@ router.get('/funciones', (req, res) => {
     });
 });
 
-// GET /horarios - Vista de horarios
-router.get('/horarios', (req, res) => {
+// GET /horarios - Vista de horarios (requiere autenticación y ser admin)
+router.get('/horarios', requireAuth, requireAdmin, (req, res) => {
   res.render('horarios', { 
     title: 'Gestión de Horarios',
-    message: 'Gestión de horarios'
+    message: 'Gestión de horarios',
+    user: req.user
   });
 });
 

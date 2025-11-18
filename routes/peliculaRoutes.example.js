@@ -1,17 +1,19 @@
+// EJEMPLO: Cómo usar el middleware de autenticación en tus rutas
+// Este archivo es solo un ejemplo, no se usa en la aplicación
+
 const express = require('express');
 const router = express.Router();
-const HorarioController = require('../controllers/horarioController');
+const PeliculaController = require('../controllers/peliculaController');
 const { authenticate, isAdmin } = require('../middleware/authMiddleware');
 
-// Todas las rutas de horarios requieren ser administrador
-// GET /api/horarios - Obtener todos los horarios (solo administrador)
-router.get('/', authenticate, isAdmin, (req, res) => {
-  HorarioController.getAll()
-    .then(horarios => {
+// Ruta pública - Cualquiera puede ver las películas
+router.get('/', (req, res) => {
+  PeliculaController.getAll()
+    .then(peliculas => {
       res.send({
         success: true,
-        data: horarios,
-        count: horarios.length
+        data: peliculas,
+        count: peliculas.length
       });
     })
     .catch(error => {
@@ -22,13 +24,13 @@ router.get('/', authenticate, isAdmin, (req, res) => {
     });
 });
 
-// GET /api/horarios/:id - Obtener un horario por ID (solo administrador)
-router.get('/:id', authenticate, isAdmin, (req, res) => {
-  HorarioController.getById(req.params.id)
-    .then(horario => {
+// Ruta protegida - Solo usuarios autenticados pueden ver una película específica
+router.get('/:id', authenticate, (req, res) => {
+  PeliculaController.getById(req.params.id)
+    .then(pelicula => {
       res.send({
         success: true,
-        data: horario
+        data: pelicula
       });
     })
     .catch(error => {
@@ -39,13 +41,13 @@ router.get('/:id', authenticate, isAdmin, (req, res) => {
     });
 });
 
-// POST /api/horarios - Crear un nuevo horario (solo administrador)
+// Ruta solo para administradores - Solo admin puede crear películas
 router.post('/', authenticate, isAdmin, (req, res) => {
-  HorarioController.create(req.body)
+  PeliculaController.create(req.body)
     .then(result => {
       res.status(201).send({
         success: true,
-        message: 'Horario creado exitosamente',
+        message: 'Película creada exitosamente',
         data: result
       });
     })
@@ -57,13 +59,13 @@ router.post('/', authenticate, isAdmin, (req, res) => {
     });
 });
 
-// PUT /api/horarios/:id - Actualizar un horario (solo administrador)
+// Ruta solo para administradores - Solo admin puede actualizar películas
 router.put('/:id', authenticate, isAdmin, (req, res) => {
-  HorarioController.update(req.params.id, req.body)
+  PeliculaController.update(req.params.id, req.body)
     .then(result => {
       res.send({
         success: true,
-        message: 'Horario actualizado exitosamente',
+        message: 'Película actualizada exitosamente',
         data: result
       });
     })
@@ -75,13 +77,13 @@ router.put('/:id', authenticate, isAdmin, (req, res) => {
     });
 });
 
-// DELETE /api/horarios/:id - Eliminar un horario (solo administrador)
+// Ruta solo para administradores - Solo admin puede eliminar películas
 router.delete('/:id', authenticate, isAdmin, (req, res) => {
-  HorarioController.delete(req.params.id)
+  PeliculaController.delete(req.params.id)
     .then(result => {
       res.send({
         success: true,
-        message: 'Horario eliminado exitosamente'
+        message: 'Película eliminada exitosamente'
       });
     })
     .catch(error => {
@@ -93,3 +95,4 @@ router.delete('/:id', authenticate, isAdmin, (req, res) => {
 });
 
 module.exports = router;
+

@@ -1,9 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const PeliculaController = require('../controllers/peliculaController');
+const { authenticate, isAdmin } = require('../middleware/authMiddleware');
 
-// GET /api/peliculas - Obtener todas las películas
-router.get('/', (req, res) => {
+// GET /api/peliculas - Obtener todas las películas (cualquier usuario autenticado)
+router.get('/', authenticate, (req, res) => {
   PeliculaController.getAll()
     .then(peliculas => {
       res.send({
@@ -20,8 +21,8 @@ router.get('/', (req, res) => {
     });
 });
 
-// GET /api/peliculas/:id - Obtener una película por ID
-router.get('/:id', (req, res) => {
+// GET /api/peliculas/:id - Obtener una película por ID (cualquier usuario autenticado)
+router.get('/:id', authenticate, (req, res) => {
   PeliculaController.getById(req.params.id)
     .then(pelicula => {
       res.send({
@@ -37,8 +38,8 @@ router.get('/:id', (req, res) => {
     });
 });
 
-// POST /api/peliculas - Crear una nueva película
-router.post('/', (req, res) => {
+// POST /api/peliculas - Crear una nueva película (solo administrador)
+router.post('/', authenticate, isAdmin, (req, res) => {
   PeliculaController.create(req.body)
     .then(result => {
       res.status(201).send({
@@ -55,8 +56,8 @@ router.post('/', (req, res) => {
     });
 });
 
-// PUT /api/peliculas/:id - Actualizar una película
-router.put('/:id', (req, res) => {
+// PUT /api/peliculas/:id - Actualizar una película (solo administrador)
+router.put('/:id', authenticate, isAdmin, (req, res) => {
   PeliculaController.update(req.params.id, req.body)
     .then(result => {
       res.send({
@@ -73,8 +74,8 @@ router.put('/:id', (req, res) => {
     });
 });
 
-// DELETE /api/peliculas/:id - Eliminar una película
-router.delete('/:id', (req, res) => {
+// DELETE /api/peliculas/:id - Eliminar una película (solo administrador)
+router.delete('/:id', authenticate, isAdmin, (req, res) => {
   PeliculaController.delete(req.params.id)
     .then(result => {
       res.send({

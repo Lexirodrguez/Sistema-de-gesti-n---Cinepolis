@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Cinepolis</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 500px;
+            margin: 50px auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .login-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .login-header h1 {
+            color: #333;
+            margin: 0 0 10px 0;
+        }
+        .login-header p {
+            color: #666;
+            margin: 0;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #333;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 14px;
+        }
+        .form-group input:focus {
+            outline: none;
+            border-color: #007bff;
+        }
+        .btn {
+            background: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 14px;
+            width: 100%;
+        }
+        .btn:hover {
+            background: #0056b3;
+        }
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        .error-message.show {
+            display: block;
+        }
+        .loading {
+            text-align: center;
+            color: #666;
+            margin-top: 20px;
+            display: none;
+        }
+        .loading.show {
+            display: block;
+        }
+        .demo-credentials {
+            margin-top: 30px;
+            padding: 15px;
+            background: #f5f5f5;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+        .demo-credentials h3 {
+            margin: 0 0 10px 0;
+            color: #333;
+            font-size: 14px;
+        }
+        .demo-credentials p {
+            margin: 5px 0;
+            color: #666;
+        }
+        .demo-credentials strong {
+            color: #007bff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="login-header">
+            <h1>🎬 Cinepolis</h1>
+            <p>Sistema de Gestión</p>
+        </div>
+
+        <div id="errorMessage" class="error-message"></div>
+
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="username">Usuario</label>
+                <input 
+                    type="text" 
+                    id="username" 
+                    name="username" 
+                    required 
+                    autocomplete="username"
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="password">Contraseña</label>
+                <input 
+                    type="password" 
+                    id="password" 
+                    name="password" 
+                    required 
+                    autocomplete="current-password"
+                >
+            </div>
+
+            <button type="submit" class="btn" id="loginBtn">
+                Iniciar Sesión
+            </button>
+        </form>
+
+        <div id="loading" class="loading">Iniciando sesión...</div>
+
+        <div class="demo-credentials">
+            <h3>Credenciales de prueba:</h3>
+            <p><strong>Administrador:</strong> admin / admin123</p>
+            <p><strong>Usuario:</strong> usuario / usuario123</p>
+        </div>
+    </div>
+
+    <script src="/js/auth.js"></script>
+    <script>
+        // Verificar si ya está autenticado
+        window.addEventListener('DOMContentLoaded', async () => {
+            const isAuthenticated = await checkAuth();
+            if (isAuthenticated) {
+                window.location.href = '/';
+            }
+        });
+
+        // Manejar login
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const loginBtn = document.getElementById('loginBtn');
+            const loading = document.getElementById('loading');
+            const errorMessage = document.getElementById('errorMessage');
+
+            // Ocultar error anterior
+            errorMessage.classList.remove('show');
+            errorMessage.textContent = '';
+
+            // Deshabilitar botón y mostrar loading
+            loginBtn.disabled = true;
+            loading.classList.add('show');
+
+            try {
+                const success = await login(username, password);
+                
+                if (success) {
+                    // Redirigir al inicio
+                    window.location.href = '/';
+                } else {
+                    // Mostrar error
+                    errorMessage.textContent = 'Credenciales inválidas. Por favor, intenta de nuevo.';
+                    errorMessage.classList.add('show');
+                }
+            } catch (error) {
+                errorMessage.textContent = 'Error de conexión. Por favor, intenta de nuevo.';
+                errorMessage.classList.add('show');
+            } finally {
+                loginBtn.disabled = false;
+                loading.classList.remove('show');
+            }
+        });
+    </script>
+</body>
+</html>
+

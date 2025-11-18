@@ -19,6 +19,38 @@
             border-radius: 10px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        .header h1 {
+            color: #333;
+            margin: 0;
+        }
+        .btn {
+            background: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 14px;
+        }
+        .btn:hover {
+            background: #0056b3;
+        }
+        .btn-danger {
+            background: #dc3545;
+        }
+        .btn-danger:hover {
+            background: #c82333;
+        }
         h1 {
             color: #333;
             text-align: center;
@@ -57,11 +89,30 @@
             font-size: 2em;
             margin-bottom: 10px;
         }
+        .admin-only {
+            opacity: 0.5;
+            pointer-events: none;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🎬 <%= title %></h1>
+        <div class="header">
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <h1 style="margin: 0;">🎬 <%= title %></h1>
+                <% if (typeof user !== 'undefined' && user) { %>
+                    <span style="color: #666; font-size: 14px;">
+                        (<%= user.rol === 'administrador' ? '👑 Admin' : '👤 Usuario' %>: <%= user.username %>)
+                    </span>
+                <% } %>
+            </div>
+            <div>
+                <% if (typeof user !== 'undefined' && user) { %>
+                    <button class="btn btn-danger" onclick="handleLogout()">Cerrar Sesión</button>
+                <% } %>
+            </div>
+        </div>
+
         <p style="text-align: center; color: #666; font-size: 18px;">
             Sistema de gestión para cine - Administra películas, funciones, salas y horarios
         </p>
@@ -79,18 +130,41 @@
                 <p>Administrar funciones de cine</p>
             </a>
             
-            <a href="/salas" class="module-card">
-                <div class="icon">🏢</div>
-                <h3>Salas</h3>
-                <p>Gestionar salas de proyección</p>
-            </a>
-            
-            <a href="/horarios" class="module-card">
-                <div class="icon">⏰</div>
-                <h3>Horarios</h3>
-                <p>Configurar horarios de funciones</p>
-            </a>
+            <% if (typeof user !== 'undefined' && user && user.rol === 'administrador') { %>
+                <a href="/salas" class="module-card">
+                    <div class="icon">🏢</div>
+                    <h3>Salas</h3>
+                    <p>Gestionar salas de proyección</p>
+                </a>
+                
+                <a href="/horarios" class="module-card">
+                    <div class="icon">⏰</div>
+                    <h3>Horarios</h3>
+                    <p>Configurar horarios de funciones</p>
+                </a>
+            <% } else { %>
+                <div class="module-card admin-only">
+                    <div class="icon">🏢</div>
+                    <h3>Salas</h3>
+                    <p>Solo administradores</p>
+                </div>
+                
+                <div class="module-card admin-only">
+                    <div class="icon">⏰</div>
+                    <h3>Horarios</h3>
+                    <p>Solo administradores</p>
+                </div>
+            <% } %>
         </div>
     </div>
+
+    <script src="/js/auth.js"></script>
+    <script>
+        async function handleLogout() {
+            if (confirm('¿Estás seguro de que quieres cerrar sesión?')) {
+                await logout();
+            }
+        }
+    </script>
 </body>
 </html>

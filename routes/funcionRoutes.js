@@ -1,9 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const FuncionController = require('../controllers/funcionController');
+const { authenticate, isAdmin } = require('../middleware/authMiddleware');
 
-// GET /api/funciones - Obtener todas las funciones
-router.get('/', (req, res) => {
+// GET /api/funciones - Obtener todas las funciones (cualquier usuario autenticado)
+router.get('/', authenticate, (req, res) => {
   FuncionController.getAll()
     .then(funciones => {
       res.send({
@@ -20,8 +21,8 @@ router.get('/', (req, res) => {
     });
 });
 
-// GET /api/funciones/:id - Obtener una función por ID
-router.get('/:id', (req, res) => {
+// GET /api/funciones/:id - Obtener una función por ID (cualquier usuario autenticado)
+router.get('/:id', authenticate, (req, res) => {
   FuncionController.getById(req.params.id)
     .then(funcion => {
       res.send({
@@ -37,8 +38,8 @@ router.get('/:id', (req, res) => {
     });
 });
 
-// POST /api/funciones - Crear una nueva función
-router.post('/', (req, res) => {
+// POST /api/funciones - Crear una nueva función (solo administrador)
+router.post('/', authenticate, isAdmin, (req, res) => {
   FuncionController.create(req.body)
     .then(result => {
       res.status(201).send({
@@ -55,8 +56,8 @@ router.post('/', (req, res) => {
     });
 });
 
-// PUT /api/funciones/:id - Actualizar una función
-router.put('/:id', (req, res) => {
+// PUT /api/funciones/:id - Actualizar una función (solo administrador)
+router.put('/:id', authenticate, isAdmin, (req, res) => {
   FuncionController.update(req.params.id, req.body)
     .then(result => {
       res.send({
@@ -73,8 +74,8 @@ router.put('/:id', (req, res) => {
     });
 });
 
-// DELETE /api/funciones/:id - Eliminar una función
-router.delete('/:id', (req, res) => {
+// DELETE /api/funciones/:id - Eliminar una función (solo administrador)
+router.delete('/:id', authenticate, isAdmin, (req, res) => {
   FuncionController.delete(req.params.id)
     .then(result => {
       res.send({

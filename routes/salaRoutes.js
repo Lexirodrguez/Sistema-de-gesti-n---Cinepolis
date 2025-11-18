@@ -1,9 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const SalaController = require('../controllers/salaController');
+const { authenticate, isAdmin } = require('../middleware/authMiddleware');
 
-// GET /api/salas - Obtener todas las salas
-router.get('/', (req, res) => {
+// Todas las rutas de salas requieren ser administrador
+// GET /api/salas - Obtener todas las salas (solo administrador)
+router.get('/', authenticate, isAdmin, (req, res) => {
   SalaController.getAll()
     .then(salas => {
       res.send({
@@ -20,8 +22,8 @@ router.get('/', (req, res) => {
     });
 });
 
-// GET /api/salas/:id - Obtener una sala por ID
-router.get('/:id', (req, res) => {
+// GET /api/salas/:id - Obtener una sala por ID (solo administrador)
+router.get('/:id', authenticate, isAdmin, (req, res) => {
   SalaController.getById(req.params.id)
     .then(sala => {
       res.send({
@@ -37,8 +39,8 @@ router.get('/:id', (req, res) => {
     });
 });
 
-// POST /api/salas - Crear una nueva sala
-router.post('/', (req, res) => {
+// POST /api/salas - Crear una nueva sala (solo administrador)
+router.post('/', authenticate, isAdmin, (req, res) => {
   SalaController.create(req.body)
     .then(result => {
       res.status(201).send({
@@ -55,8 +57,8 @@ router.post('/', (req, res) => {
     });
 });
 
-// PUT /api/salas/:id - Actualizar una sala
-router.put('/:id', (req, res) => {
+// PUT /api/salas/:id - Actualizar una sala (solo administrador)
+router.put('/:id', authenticate, isAdmin, (req, res) => {
   SalaController.update(req.params.id, req.body)
     .then(result => {
       res.send({
@@ -73,8 +75,8 @@ router.put('/:id', (req, res) => {
     });
 });
 
-// DELETE /api/salas/:id - Eliminar una sala
-router.delete('/:id', (req, res) => {
+// DELETE /api/salas/:id - Eliminar una sala (solo administrador)
+router.delete('/:id', authenticate, isAdmin, (req, res) => {
   SalaController.delete(req.params.id)
     .then(result => {
       res.send({

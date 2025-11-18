@@ -1,0 +1,27 @@
+<div class="header">
+    <div style="display: flex; align-items: center; gap: 15px;">
+        <h1 style="margin: 0;">🎬 <%= title %></h1>
+        <% if (typeof user !== 'undefined' && user) { %>
+            <span style="color: #666; font-size: 14px;">
+                (<%= user.rol === 'administrador' ? '👑 Admin' : '👤 Usuario' %>: <%= user.username %>)
+            </span>
+        <% } %>
+    </div>
+    <div style="display: flex; gap: 10px; align-items: center;">
+        <% if (typeof user !== 'undefined' && user) { %>
+            <button class="btn btn-danger" onclick="logout()">Cerrar Sesión</button>
+        <% } %>
+        <a href="/" class="btn">← Inicio</a>
+    </div>
+</div>
+
+<script src="/js/auth.js"></script>
+<script>
+    // Función para logout
+    async function logout() {
+        if (confirm('¿Estás seguro de que quieres cerrar sesión?')) {
+            await logout();
+        }
+    }
+</script>
+
